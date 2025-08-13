@@ -4,7 +4,9 @@ This project implements a serverless image processing application using AWS serv
 
 ## Architecture
 
-![Architecture Diagram](./architecture.svg)
+![Architecture Diagram](./diagram-1.png)
+
+
 
 - **Amazon S3**: Two buckets for storing original and processed images
 - **AWS Lambda**: Executes image processing when new images are uploaded
