@@ -7,10 +7,6 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub '${AWS::StackName}-source-images'
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: 's3:ObjectCreated:*'
-            Function: !GetAtt ImageProcessorFunction.Arn
 
   # S3 bucket for processed images
   DestinationBucket:
@@ -21,12 +17,13 @@ Resources:
   # Lambda permission to allow S3 to invoke the function
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
+    DependsOn: ImageProcessorFunction
     Properties:
       Action: 'lambda:InvokeFunction'
       FunctionName: !Ref ImageProcessorFunction
       Principal: 's3.amazonaws.com'
       SourceAccount: !Ref AWS::AccountId
-      SourceArn: !GetAtt SourceBucket.Arn
+      SourceArn: !Sub 'arn:aws:s3:::${AWS::StackName}-source-images'
 
   # IAM role for the Lambda function
   LambdaExecutionRole:
@@ -49,11 +46,11 @@ Resources:
               - Effect: Allow
                 Action:
                   - 's3:GetObject'
-                Resource: !Sub '${SourceBucket.Arn}/*'
+                Resource: !Sub 'arn:aws:s3:::${AWS::StackName}-source-images/*'
               - Effect: Allow
                 Action:
                   - 's3:PutObject'
-                Resource: !Sub '${DestinationBucket.Arn}/*'
+                Resource: !Sub 'arn:aws:s3:::${AWS::StackName}-processed-images/*'
 
   # Lambda function for image processing
   ImageProcessorFunction:
@@ -128,6 +125,16 @@ Resources:
                           'message': f"Error processing image: {str(e)}"
                       })
                   }
+
+  # S3 bucket notification configuration (separate from bucket to avoid circular dependency)
+  SourceBucketNotification:
+    Type: AWS::S3::BucketNotification
+    Properties:
+      Bucket: !Ref SourceBucket
+      LambdaConfigurations:
+        - Event: 's3:ObjectCreated:*'
+          Function: !GetAtt ImageProcessorFunction.Arn
+    DependsOn: LambdaInvokePermission
 
 Outputs:
   SourceBucketName:
