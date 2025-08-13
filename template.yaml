@@ -5,8 +5,13 @@ Resources:
   # S3 bucket for original images
   SourceBucket:
     Type: AWS::S3::Bucket
+    DependsOn: LambdaInvokePermission
     Properties:
       BucketName: !Sub '${AWS::StackName}-source-images'
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt ImageProcessorFunction.Arn
 
   # S3 bucket for processed images
   DestinationBucket:
@@ -55,6 +60,7 @@ Resources:
   # Lambda function for image processing
   ImageProcessorFunction:
     Type: AWS::Lambda::Function
+    DependsOn: LambdaExecutionRole
     Properties:
       FunctionName: !Sub '${AWS::StackName}-image-processor'
       Handler: process_image.lambda_handler
@@ -126,15 +132,7 @@ Resources:
                       })
                   }
 
-  # S3 bucket notification configuration (separate from bucket to avoid circular dependency)
-  SourceBucketNotification:
-    Type: AWS::S3::BucketNotification
-    Properties:
-      Bucket: !Ref SourceBucket
-      LambdaConfigurations:
-        - Event: 's3:ObjectCreated:*'
-          Function: !GetAtt ImageProcessorFunction.Arn
-    DependsOn: LambdaInvokePermission
+
 
 Outputs:
   SourceBucketName:
