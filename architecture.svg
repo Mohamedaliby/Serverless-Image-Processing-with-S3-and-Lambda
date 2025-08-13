@@ -1,0 +1,46 @@
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="400" fill="#f8f9fa" />
+  
+  <!-- Title -->
+  <text x="400" y="40" font-family="Arial" font-size="24" text-anchor="middle" font-weight="bold">Serverless Image Processing Architecture</text>
+  
+  <!-- Source S3 Bucket -->
+  <rect x="100" y="100" width="150" height="100" rx="10" ry="10" fill="#FF9900" stroke="#E68A00" stroke-width="2" />
+  <text x="175" y="155" font-family="Arial" font-size="16" text-anchor="middle" fill="white">Source Bucket</text>
+  <text x="175" y="175" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Original Images</text>
+  
+  <!-- Lambda Function -->
+  <rect x="325" y="100" width="150" height="100" rx="10" ry="10" fill="#FF9900" stroke="#E68A00" stroke-width="2" />
+  <text x="400" y="155" font-family="Arial" font-size="16" text-anchor="middle" fill="white">Lambda Function</text>
+  <text x="400" y="175" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Image Processing</text>
+  
+  <!-- Destination S3 Bucket -->
+  <rect x="550" y="100" width="150" height="100" rx="10" ry="10" fill="#FF9900" stroke="#E68A00" stroke-width="2" />
+  <text x="625" y="155" font-family="Arial" font-size="16" text-anchor="middle" fill="white">Destination Bucket</text>
+  <text x="625" y="175" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Processed Images</text>
+  
+  <!-- Arrows -->
+  <!-- Source to Lambda -->
+  <line x1="250" y1="150" x2="325" y2="150" stroke="#232F3E" stroke-width="2" />
+  <polygon points="315,145 325,150 315,155" fill="#232F3E" />
+  <text x="287" y="140" font-family="Arial" font-size="12" text-anchor="middle">S3 Event</text>
+  
+  <!-- Lambda to Destination -->
+  <line x1="475" y1="150" x2="550" y2="150" stroke="#232F3E" stroke-width="2" />
+  <polygon points="540,145 550,150 540,155" fill="#232F3E" />
+  <text x="512" y="140" font-family="Arial" font-size="12" text-anchor="middle">Store</text>
+  
+  <!-- User to Source -->
+  <circle cx="50" cy="150" r="20" fill="#232F3E" />
+  <text x="50" y="155" font-family="Arial" font-size="16" text-anchor="middle" fill="white">U</text>
+  <line x1="70" y1="150" x2="100" y2="150" stroke="#232F3E" stroke-width="2" />
+  <polygon points="90,145 100,150 90,155" fill="#232F3E" />
+  <text x="85" y="140" font-family="Arial" font-size="12" text-anchor="middle">Upload</text>
+  
+  <!-- Flow Description -->
+  <rect x="100" y="250" width="600" height="100" rx="10" ry="10" fill="white" stroke="#232F3E" stroke-width="1" />
+  <text x="120" y="280" font-family="Arial" font-size="14">1. User uploads an image to the Source S3 Bucket</text>
+  <text x="120" y="310" font-family="Arial" font-size="14">2. S3 event triggers the Lambda function</text>
+  <text x="120" y="340" font-family="Arial" font-size="14">3. Lambda processes (resizes) the image and stores it in the Destination S3 Bucket</text>
+</svg>

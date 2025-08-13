@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Serverless Image Processing with S3 and Lambda'
+
+Resources:
+  # S3 bucket for original images
+  SourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-source-images'
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt ImageProcessorFunction.Arn
+
+  # S3 bucket for processed images
+  DestinationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-processed-images'
+
+  # Lambda permission to allow S3 to invoke the function
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref ImageProcessorFunction
+      Principal: 's3.amazonaws.com'
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !GetAtt SourceBucket.Arn
+
+  # IAM role for the Lambda function
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                Resource: !Sub '${SourceBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                Resource: !Sub '${DestinationBucket.Arn}/*'
+
+  # Lambda function for image processing
+  ImageProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-image-processor'
+      Handler: process_image.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.9
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          DESTINATION_BUCKET: !Ref DestinationBucket
+      Code:
+        ZipFile: |
+          import boto3
+          import os
+          import json
+          from PIL import Image
+          import io
+          
+          s3_client = boto3.client('s3')
+          
+          def lambda_handler(event, context):
+              # Get the source bucket and key from the event
+              source_bucket = event['Records'][0]['s3']['bucket']['name']
+              source_key = event['Records'][0]['s3']['object']['key']
+              
+              # Get the destination bucket from environment variables
+              destination_bucket = os.environ['DESTINATION_BUCKET']
+              
+              try:
+                  # Download the image from S3
+                  response = s3_client.get_object(Bucket=source_bucket, Key=source_key)
+                  image_content = response['Body'].read()
+                  
+                  # Process the image (resize)
+                  with Image.open(io.BytesIO(image_content)) as image:
+                      # Resize to 50% of original size
+                      width, height = image.size
+                      resized_image = image.resize((int(width * 0.5), int(height * 0.5)))
+                      
+                      # Save the processed image to a buffer
+                      buffer = io.BytesIO()
+                      resized_image.save(buffer, format=image.format)
+                      buffer.seek(0)
+                      
+                      # Upload the processed image to the destination bucket
+                      s3_client.put_object(
+                          Bucket=destination_bucket,
+                          Key=f"resized-{source_key}",
+                          Body=buffer,
+                          ContentType=response['ContentType']
+                      )
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Image processed successfully',
+                          'source_bucket': source_bucket,
+                          'source_key': source_key,
+                          'destination_bucket': destination_bucket,
+                          'destination_key': f"resized-{source_key}"
+                      })
+                  }
+              except Exception as e:
+                  print(f"Error processing image: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({
+                          'message': f"Error processing image: {str(e)}"
+                      })
+                  }
+
+Outputs:
+  SourceBucketName:
+    Description: "Name of the source S3 bucket"
+    Value: !Ref SourceBucket
+  
+  DestinationBucketName:
+    Description: "Name of the destination S3 bucket"
+    Value: !Ref DestinationBucket
+  
+  LambdaFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref ImageProcessorFunction
