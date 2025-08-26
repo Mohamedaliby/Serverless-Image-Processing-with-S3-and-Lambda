@@ -1,6 +1,6 @@
-# Serverless Image Processing with AWS
+# Image Resizer Lambda
 
-This project implements a serverless image processing application using AWS services. Users can upload images to an S3 bucket, which triggers a Lambda function to process (resize) the images and store them in another S3 bucket.
+This Lambda will be invoked when a file is uploaded to a particular bucket. It will fetch the file that was added, resize it, and store the output in a different bucket.
 
 ## Architecture
 
@@ -14,49 +14,33 @@ This project implements a serverless image processing application using AWS serv
 
 ## Setup Instructions
 
-### Local Testing
+## Run Locally
 
-Before deploying to AWS, you can test the image processing functionality locally:
+Clone the project
 
 ```bash
-pip install -r requirements.txt
-python test_locally.py your-image.jpg
+  git clone https://github.com/OneLightWebDev/image-resizer-lambda.git
 ```
 
-### Deployment
+Install Dependencies
 
-1. Deploy using the provided script:
-   - On Linux/Mac: `./deploy.sh`
-   - On Windows: `deploy.bat`
+```bash
+# Required options if on mac
+npm install --arch=x64 --platform=linux --target=16x sharp
+```
 
-   Or manually deploy the CloudFormation template:
-   ```bash
-   aws cloudformation deploy --template-file template.yaml --stack-name image-processor --capabilities CAPABILITY_IAM
-   ```
+## Environment Variables
 
-2. Upload an image to the source bucket:
-   ```bash
-   aws s3 cp your-image.jpg s3://SOURCE_BUCKET_NAME/
-   ```
+Remember set the `DEST_BUCKET` in your Lambda's "Configuration" tab. To do this, open your Lambda in the AWS Console, select the "Configuration" tab, then click "Environment variables"
 
-3. Check the destination bucket for the processed image:
-   ```bash
-   aws s3 ls s3://DESTINATION_BUCKET_NAME/
-   ```
+```bash
+DEST_BUCKET=thumbnails-bucket-name
+```
 
-## Project Structure
+## Deployment
 
-- `template.yaml`: CloudFormation template defining all AWS resources
-- `src/`: Contains Lambda function code
-  - `process_image.py`: Python code for image processing
-- `architecture.svg`: Architecture diagram
-- `requirements.txt`: Python dependencies for the Lambda function
-- `deploy.sh`: Deployment script for Linux/Mac
-- `deploy.bat`: Deployment script for Windows
-- `test_locally.py`: Script to test image processing locally
+```bash
+npm run package
+```
 
-## Learning Outcomes
-
-- Building event-driven architectures with Lambda and S3 triggers
-- Understanding cost-efficient, auto-scaling serverless applications
-- Enhancing security using IAM roles and S3 bucket policies
+Running the command above will zip your source code and dependencies. The zip can then be uploaded to your Lambda.
