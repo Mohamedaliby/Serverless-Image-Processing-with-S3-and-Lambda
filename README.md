@@ -7,6 +7,10 @@ This Lambda will be invoked when a file is uploaded to a particular bucket. It w
 ![Architecture Diagram](./diagram-1.png)
 
 
+https://github.com/user-attachments/assets/e2b76329-b534-4c44-9ac1-a69ceff431b1
+
+
+
 
 - **Amazon S3**: Two buckets for storing original and processed images
 - **AWS Lambda**: Executes image processing when new images are uploaded
