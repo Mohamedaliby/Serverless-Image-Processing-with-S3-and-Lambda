@@ -44,3 +44,7 @@ npm run package
 ```
 
 Running the command above will zip your source code and dependencies. The zip can then be uploaded to your Lambda.
+
+
+Credits to nikitadev-yt
+https://github.com/nikitadev-yt/image-resizer-lambda/tree/main
